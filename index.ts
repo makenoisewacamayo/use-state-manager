@@ -3,10 +3,10 @@ import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 // Manager
 class Manager {
 
-    globalKey : string = '';
-    subscribers : Array<any> = [];
-    value : any;
-    debug : boolean = false;
+    private globalKey : string = '';
+    private subscribers : Array<any> = [];
+    private value : any;
+    private debug : boolean = false;
 
     constructor(
         initialValue: any = null,
@@ -41,7 +41,7 @@ class Manager {
         this.subscribers.push(callback);
     };
 
-    console = (data : any) => {
+    private console = (data : any) => {
         console.log(`manager[${this.globalKey}]:`, data);
     }
 
