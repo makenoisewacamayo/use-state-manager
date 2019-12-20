@@ -1,12 +1,12 @@
-import { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect } from 'react';
 
-// Manager
 class Manager {
 
     private globalKey : string = '';
-    private subscribers : Array<any> = [];
+    private subscribers : any = {};
     private value : any;
     private debug : boolean = false;
+    private autoincrement : number = 0;
 
     constructor(
         initialValue: any = null,
@@ -28,8 +28,8 @@ class Manager {
     publish = (value: any) => {
         this.console(value);
         this.value = value;
-        this.subscribers.forEach((callback : any) => {
-            callback(value);
+        Object.keys(this.subscribers).forEach((key : any) => {
+            this.subscribers[key](value);
         });
     };
 
@@ -37,12 +37,23 @@ class Manager {
         this.publish(this.value);
     };
 
-    subscribe = (callback : any) => {
-        this.subscribers.push(callback);
+    subscribe = (callback : any) : number => {
+        this.autoincrement += 1;
+
+        this.subscribers[this.autoincrement] = callback;
+        // this.subscribers.push(callback);
+        // Object.keys(this.subscribers)
+        return this.autoincrement;
     };
 
+    unsubscribe = (key : number) => {
+        delete this.subscribers[key];
+    }
+
     private console = (data : any) => {
-        console.log(`manager[${this.globalKey}]:`, data);
+        if(this.debug) {
+            console.log(`manager[${this.globalKey}]:`, data);
+        }
     }
 
     getValue = () : any => {
@@ -65,30 +76,21 @@ export const useManagerInit = (manager : Manager) => {
 }
 
 /**
- * Ussing in react, by subscribe setter
- * @param {*} manager 
- * @param {*} callback 
- */
-export const useManagerCallbackRegister = (manager : Manager, callback : Dispatch<SetStateAction<any>>) : any => {
-    useEffect(() => {
-        manager.subscribe(callback);
-    }, [manager, callback])
-    return manager.publish;
-};
-
-/**
  * 
- * @param manager 
+ * @param manager
  */
-export const useStateManager = (manager : Manager) : any => {
+export const useStateManager = (manager : Manager) : Array<any|Function> => {
     const [value, setValue] = useState(manager.getValue());
+    const [key, setKey] = useState(0);
+
     useEffect(() => {
-        manager.subscribe(setValue);
+        const k = manager.subscribe(setValue);
+        setKey(k);
     }, [manager, setValue])
+
+    useEffect(() => {
+        return () => manager.unsubscribe(key);
+    }, [manager, key])
+
     return [value, manager.publish];
 };
-/**
- * Example
- * const [age, setAge] = useState(0);
- * useManagerCallbackRegister(manager, setAge);
- */
