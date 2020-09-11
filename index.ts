@@ -6,15 +6,18 @@ class Manager {
     private subscribers : any = {};
     private value : any;
     private debug : boolean = false;
+    private persist: boolean = false;
     private autoincrement : number = 0;
 
     constructor(
         initialValue: any = null,
         globalKey : any = '',
-        debug : boolean = false) {
+        debug : boolean = false,
+        persist: boolean = false ) {
 
         this.globalKey = globalKey;
         this.debug = debug;
+        this.persist = persist;
         if (globalKey !== '') {
             const _global = (window /* browser || global /* node */) as any
             _global[globalKey] = this;
@@ -37,17 +40,23 @@ class Manager {
         this.publish(this.value);
     };
 
-    subscribe = (callback : any) : number => {
+    subscribe = (callback : any, key?: string) : string => {
         this.autoincrement += 1;
-
-        this.subscribers[this.autoincrement] = callback;
+        const subsciberName = this.persist && key ? key : String(this.autoincrement);
+        const assert = Object.keys(this.subscribers).includes(subsciberName)
+        if (this.persist && assert) {
+          return subsciberName
+        }
+        this.subscribers[subsciberName] = callback;
         // this.subscribers.push(callback);
         // Object.keys(this.subscribers)
-        return this.autoincrement;
+        return subsciberName;
     };
 
-    unsubscribe = (key : number) => {
-        delete this.subscribers[key];
+    unsubscribe = (key : string) => {
+        if (!this.persist) {
+          delete this.subscribers[key];
+        }
     }
 
     private console = (data : any) => {
@@ -61,7 +70,7 @@ class Manager {
     }
 }
 
-export const createManager = (initialValue : any, name : string, debug = false) => new Manager(initialValue, name, debug);
+export const createManager = (initialValue : any, name : string, debug = false, persist = false) => new Manager(initialValue, name, debug, persist);
 
 // react adapter
 
@@ -79,12 +88,12 @@ export const useManagerInit = (manager : Manager) => {
  * 
  * @param manager
  */
-export const useStateManager = (manager : Manager) : Array<any|Function> => {
+export const useStateManager = (manager : Manager, managerKey?: string) : Array<any|Function> => {
     const [value, setValue] = useState(manager.getValue());
-    const [key, setKey] = useState(0);
+    const [key, setKey] = useState('');
 
     useEffect(() => {
-        const k = manager.subscribe(setValue);
+        const k = manager.subscribe(setValue, managerKey);
         setKey(k);
     }, [manager, setValue])
 

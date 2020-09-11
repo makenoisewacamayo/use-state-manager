@@ -20,8 +20,9 @@ import { createManager } from 'use-state-manager';
  * @param {any} - variable a observar
  * @param {string} - key global para exponer el <manager> y hacerlo accesible <window.key>
  * @param {boolean} - true para ver un log, default=false
+ * @param {boolean} - true Para hacerlo persistente
  */
-export const textManager = createManager(valor, key, debugMode)
+export const textManager = createManager(valor, key, debugMode, persist)
 
 ```
 
@@ -55,8 +56,9 @@ import { useStateManager } from 'use-state-manager';
 import { textManager } from '../../store/managers';
 
 const Home = () => {
-
-  const [year, setYear] = useStateManager(yearManager);
+  
+  
+  const [year, setYear] = useStateManager(yearManager, "uniquekey");
 
   return (
     <div className="home">
